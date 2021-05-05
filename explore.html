@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<!--
+    explore.html
+
+    Created by Alezia Kurdis, May 3rd, 2021.
+    Copyright 2021 Vircadia and contributors.
+    
+    Generate an exploration app based on the places api.
+
+    Distributed under the Apache License, Version 2.0.
+    See the accompanying file LICENSE or http://www.apache.org/licenses/LICENSE-2.0.html
+-->
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <script>
+            var thisPageName = "explore.html";        
+            var currentPath = window.location.protocol + "//" + window.location.host + window.location.pathname;
+            var ROOTPATH = currentPath.replace(thisPageName, "");
+            var channel = "vircadia-ak-goto";
+            
+            var placeList = [];
+
+            function templateFonctionCommunicateWithJs(optional) {
+
+                //Exemple of sturctured data to transmit
+                var dataObj = {
+                    "action": "action_name",
+                    "info": "any info You want to transmit"
+                };
+
+                EventBridge.emitWebEvent(JSON.stringify(dataObj));
+
+            }
+
+
+        </script>
+        <style>
+            body {
+                background: #73758c;
+                font-family: Arial, Helvetica, sans-serif;
+                font-size: 12px;
+                color: #FFFFFF;
+                font-weight: 600;
+                text-decoration: none;
+                font-style: normal;
+                font-variant: normal;
+                text-transform: none;
+            }
+        </style>
+    </head>
+    <body>
+        <div id='list_content'></div>
+        <script>
+            //LISTENER FROM JS FILE:
+            EventBridge.scriptEventReceived.connect(function (message) {
+                if (message.channel === channel && message.action === "PLACE_DATA") {
+                    placeList = [];
+                    placeList = message.data;
+                    generateContent();
+                }
+            });
+            
+            var goSignal = {
+                "channel": channel,
+                "action": "READY_FOR_CONTENT"
+                };
+                
+            EventBridge.emitWebEvent(JSON.stringify(goSignal));
+
+
+
+            
+            function generateContent() {
+                var i = 0;
+                var formatedList = "";
+                for (i = 0; i < placeList.length; i++) {
+                
+                
+                    formatedList = formatedList + "<a href='3' onclick='teleport(" + '"' + placeList[i].id + '"' + ", " + '"' + placeList[i].address + '"' + "); return false;'>" + placeList[i].name + "</a>";
+                    formatedList = formatedList + " (" + placeList[i].category + ")<br>";
+
+                    /*
+                    Here's where you generate the list.
+                    This is the data that you can use to build each portal:
+                    
+                        placeList[i].order
+                            String (Just a sequence used to establish the current ordering. No expected to be use, the list is already sorted based on it for you when the page get the data.)
+                        placeList[i].category
+                            String | RUBY/BLUESTEAL/GOLD/SILVER/BRONZE/IRON/STONE (Define some common pattern of section of teh list. example RUBY are the "Featured" place, BLEUSTEAL are the Frequently Visited Place... see Hecate repo for details))
+                        placeList[i].accessStatus
+                            String | FULL/PEOPLE/{null} (this indicate if there are people or not, or if the domain is full capacity. (Note: We dont suport capacity yet so FULL should not happen for now)
+                        placeList[i].name
+                            String (This is the name of the Place. We might want a keyword filter based on this content)
+                        placeList[i].description
+                            String (This is the description of the Place. We might want a keyword filter based on this content)
+                        placeList[i].thumbnail
+                            String (This is the url of the place picture)
+                        placeList[i].maturity
+                            String | "unrated", "adult", "mature", "teen", "everyone" (we might want a filter based on that)
+                        placeList[i].address
+                            String (This is the hifi url of the place. To make a teleporter link, use the function teleport(placeID, address))
+                        placeList[i].current_attendance
+                            Number (The number of people currently in the Domain. (Maybe one day in the Place))
+                        placeList[i].id
+                            String (This is the place ID, required to make a teleporter link, use the function teleport(placeID, address))
+                        placeList[i].visibility
+                            String | 'open', 'friends', 'connections', 'private' (for now only "open" are return by the api, so nothing to do with this. Eventually, if we coudl have something to know if Annonymous are allowed, we could disply but lock the place where anonymous are not welcome, if teh connected user is anonnymous. So they might see an interest to get an account.)
+                        placeList[i].capacity
+                            Number (Would be the max number of user allowed in the targetted domain. Not supported for now, hardcoded for now to 1000)
+                    
+                    */
+                    
+                }
+                document.getElementById("list_content").innerHTML = formatedList;
+            }
+
+
+
+            
+            function teleport(placeID, address) {
+                var teleportOrder = {
+                    "channel": channel,
+                    "action": "TELEPORT",
+                    "placeID": placeID,
+                    "address": address
+                    };
+                EventBridge.emitWebEvent(JSON.stringify(teleportOrder));
+                
+            }
+        </script>
+    </body>
+</html>
